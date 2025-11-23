@@ -1,4 +1,4 @@
-# Etapa 1: build
+# Etapa 1: build (Gradle dentro da imagem)
 FROM gradle:8.10-jdk17 AS builder
 WORKDIR /app
 
@@ -10,10 +10,10 @@ RUN gradle bootJar --no-daemon
 FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
-# Copia o jar gerado
+# Copia o JAR gerado pelo Gradle
 COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Porta exposta (Render detecta automaticamente)
+# Porta exposta
 EXPOSE 8080
 
 # Executa a aplicação
