@@ -62,7 +62,14 @@ public class AiService {
                     new TypeReference<List<Map<String, Object>>>() {}
             );
 
-            String generatedText = (String) list.getFirst().get("generated_text");
+            if (list == null || list.isEmpty()) {
+                return new AiRecommendationResponse("A IA não retornou nenhum texto.");
+            }
+
+            Object generated = list.get(0).get("generated_text");
+            String generatedText = generated != null
+                    ? generated.toString()
+                    : "A IA não retornou nenhum texto.";
 
             return new AiRecommendationResponse(generatedText);
         } catch (Exception e) {
