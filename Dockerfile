@@ -1,23 +1,34 @@
-# Etapa 1: build (usa o Gradle Wrapper do projeto)
-FROM gradle:8.10-jdk21 AS builder
+# ============================================
+# STAGE 1 - BUILD DO JAR (GRADLE + JAVA 21)
+# ============================================
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
 WORKDIR /app
 
-# Copia tudo do projeto para dentro da imagem
-COPY . .
+# Copia arquivos do Gradle
+COPY gradlew ./
+COPY gradle ./gradle
+COPY build.gradle settings.gradle ./
 
-# Garante que o gradlew é executável e usa ele (mesmo Gradle e toolchains do projeto)
-RUN chmod +x gradlew && ./gradlew clean bootJar --no-daemon
+# Copia o código-fonte
+COPY src ./src
 
-# Etapa 2: imagem final (runtime)
-# Imagem de runtime (Java 17)
-FROM eclipse-temurin:17-jdk
+# Gera o jar da aplicação
+RUN chmod +x ./gradlew && ./gradlew clean bootJar --no-daemon
+
+# ============================================
+# STAGE 2 - RUNTIME (JRE)
+# ============================================
+FROM eclipse-temurin:21-jre-alpine
+
 WORKDIR /app
 
-# Copia o JAR gerado pelo build (Gradle) no agente
-COPY build/libs/*.jar app.jar
+# Copia o jar gerado
+COPY --from=builder /app/build/libs/*.jar app.jar
 
-# Porta interna do Spring Boot
+# Porta padrão do Spring Boot (vai ler PORT=8080 do ambiente)
 EXPOSE 8080
 
-# Usa PORT (ACI) ou 8080 por padrão
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar ${BOOT_ARGS}"]
+ENV JAVA_OPTS=""
+
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -jar /app/app.jar"]
