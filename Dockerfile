@@ -9,14 +9,15 @@ COPY . .
 RUN chmod +x gradlew && ./gradlew clean bootJar --no-daemon
 
 # Etapa 2: imagem final (runtime)
-FROM eclipse-temurin:21-jdk
+# Imagem de runtime (Java 17)
+FROM eclipse-temurin:17-jdk
 WORKDIR /app
 
-# Copia o JAR gerado na etapa de build
-COPY --from=builder /app/build/libs/*.jar app.jar
+# Copia o JAR gerado pelo build (Gradle) no agente
+COPY build/libs/*.jar app.jar
 
-# Expõe a porta do Spring Boot
+# Porta interna do Spring Boot
 EXPOSE 8080
 
-# Sobe a aplicação usando a PORT (Azure ACI) ou 8080 como default
+# Usa PORT (ACI) ou 8080 por padrão
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dserver.port=${PORT:-8080} -jar app.jar ${BOOT_ARGS}"]
